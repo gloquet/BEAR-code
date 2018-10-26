@@ -13,6 +13,7 @@
 #install.packages('readr')
 #install.packages('xlsx')
 #install.packages('zoo')
+install.packages('class')
 
 
 #load packages
@@ -29,6 +30,7 @@ library('rattle')
 library('readr')
 library('xlsx')
 library('zoo')
+library('class')
 
 
 #data path
@@ -127,6 +129,40 @@ ggplot(data= df, aes(x=frequency, y=HL, color=source, group=source)) +
 
 
 
+#Vector Quantization
+
+
+
+
+
+# Assign Audiograms 
+
+
+
+
+
+
+
+
+#Helper functions
+AssignAudiogram <- function(reference, target, classVector) {
+  
+  rowReference <- nrow(reference)
+  rowTarget <- nrow(target)
+  
+  tmp <- rep(0,rowReference)
+  cls <- rep(0,rowTarget)
+  
+  for (idx in 1:rowTarget){
+    for (ldx in 1:rowReference){
+      tmp[ldx] <- sqrt(1/rowReference * sum((target[idx,] - reference[ldx,])^2)))
+    }
+    cls[idx] <- classVector(which.max(tmp))
+  }
+ 
+  return(cls)
+   
+}
 
 
 
