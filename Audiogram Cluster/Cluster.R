@@ -192,29 +192,36 @@ ggplot(data=distr,aes(x=St.Audiograms,y=Percentage)) +
 
 # Assign Audiograms 
 
+reference <- data.reference[,2:7]
+target <- data.audiogram[,3:8]
+classVector <- data.reference[,1]
 
 
-
-
-#Helper functions
-AssignAudiogram <- function(reference, target, classVector) {
+rowReference <- nrow(reference)
+rowTarget <- nrow(target)
   
-  rowReference <- nrow(reference)
-  rowTarget <- nrow(target)
+tmp <- rep(0,rowReference)
+cls <- rep(0,rowTarget)
   
-  tmp <- rep(0,rowReference)
-  cls <- rep(0,rowTarget)
-  
-  for (idx in 1:rowTarget){
-    for (ldx in 1:rowReference){
-      tmp[ldx] <- sqrt(1/rowReference * sum((target[idx,] - reference[ldx,])^2))
-    }
-    cls[idx] <- classVector(which.max(tmp))
+for (idx in 1:rowTarget){
+  for (ldx in 1:rowReference){
+    tmp[ldx] <- sqrt(1/rowReference * sum((target[idx,] - reference[ldx,])^2))
   }
- 
-  return(cls)
-   
+  cls[idx] <- which.min(tmp)
 }
+ 
+clusterAud <- classVector[cls]
+
+
+
+audiogram.left <- data.frame(data.left.audiogram,clusterAud[1:1961])
+audiogram.right <- data.frame(data.right.audiogram,clusterAud[1962:3922]) 
+
+audiogram.left <- data.frame(audiogram.left,data.left[,1])
+audiogram.right <- data.frame(audiogram.right,data.right[,1])
+
+
+
 
 
 
