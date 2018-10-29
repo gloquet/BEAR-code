@@ -13,7 +13,7 @@
 #install.packages('readr')
 #install.packages('xlsx')
 #install.packages('zoo')
-install.packages('class')
+#install.packages('class')
 
 
 #load packages
@@ -30,7 +30,7 @@ library('rattle')
 library('readr')
 library('xlsx')
 library('zoo')
-library('class')
+
 
 
 #data path
@@ -129,7 +129,50 @@ ggplot(data= df, aes(x=frequency, y=HL, color=source, group=source)) +
 
 
 
-#Vector Quantization
+#Learning Vector Quantization
+library('class')
+
+cd <-  data.audiogram %>% select(-starts_with(c('Age'))) %>% 
+  select(-starts_with(c('Gender'))) %>% lvqinit(factor(fit.km.10$cluster),k=1)
+
+cd1 <- data.audiogram %>% select(-starts_with(c('Age'))) %>% 
+  select(-starts_with(c('Gender'))) %>% olvq1(factor(fit.km.10$cluster),cd)
+
+tmp <- data.frame(cd1$x,cd1$cl)
+
+centers.lvq <- tmp %>% group_by(cd1.cl) %>% summarize_all(mean)
+
+
+
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==1] <- c('N1')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==2] <- c('S1')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl == 8]  <- c('N2')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==4] <- c('N7')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==5] <- c('S2')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==10] <- c('N5')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==3] <- c('N4')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==9] <- c('S3')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==6] <- c('N6')
+levels(centers.lvq$cd1.cl)[centers.lvq$cd1.cl==7] <- c('N3')
+
+
+colnames(centers.lvq) <- c('cluster','0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+
+
+centers.lvq.10 <- centers.lvq %>% melt
+names(centers.lvq.10) <- c('clusterNr','frequency','HL')
+
+df1 <- bind_rows(list(Standard_Audiograms=centers.standard,Vector_Quantization =centers.lvq.10),
+                .id = 'source')
+
+
+
+ggplot(data= df1, aes(x=frequency, y=HL, color=source, group=source)) +
+  geom_point() +
+  geom_line() +
+  geom_line() +
+  scale_color_manual(values=c('blue','red')) +
+  facet_wrap(~clusterNr) 
 
 
 
@@ -155,7 +198,7 @@ AssignAudiogram <- function(reference, target, classVector) {
   
   for (idx in 1:rowTarget){
     for (ldx in 1:rowReference){
-      tmp[ldx] <- sqrt(1/rowReference * sum((target[idx,] - reference[ldx,])^2)))
+      tmp[ldx] <- sqrt(1/rowReference * sum((target[idx,] - reference[ldx,])^2))
     }
     cls[idx] <- classVector(which.max(tmp))
   }
