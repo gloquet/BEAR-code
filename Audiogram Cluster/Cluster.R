@@ -118,7 +118,6 @@ ggplot(data= df, aes(x=frequency, y=HL, color=source, group=source)) +
         
 
 
-
 # ggplot() +
 #   geom_line(data=centers.standard,aes(x=frequency,y=HL,group=1),color='blue') +
 #   geom_point(data=centers.standard,aes(x=frequency,y=HL),color='blue') +
@@ -166,7 +165,7 @@ df1 <- bind_rows(list(Standard_Audiograms=centers.standard,Vector_Quantization =
                 .id = 'source')
 
 
-
+#plot 
 ggplot(data= df1, aes(x=frequency, y=HL, color=source, group=source)) +
   geom_point() +
   geom_line() +
@@ -174,14 +173,24 @@ ggplot(data= df1, aes(x=frequency, y=HL, color=source, group=source)) +
   scale_color_manual(values=c('blue','red')) +
   facet_wrap(~clusterNr) 
 
+Percentage <-  100*fit.km.10$size/sum(fit.km.10$size)
 
 
+St.Audiograms <- c('N1','S1','N4','N7','S2','N6','N3','N2','S3','N5')
+distr <- data.frame(St.Audiograms,Percentage)
+
+#relative distribution of clusters 
+#[1]  7.343192 13.768485 14.660887  1.733809 10.632330  5.787863 15.731770 15.680775  4.130546 10.530342
+
+
+ggplot(data=distr,aes(x=St.Audiograms,y=Percentage)) +
+         geom_bar(stat='identity',width=0.7, fill = 'blue') + 
+         scale_y_continuous(limits = c(0, 30)) + 
+         xlab('Audiogram class') +
+         ylab('Percentage of all data')
 
 
 # Assign Audiograms 
-
-
-
 
 
 
