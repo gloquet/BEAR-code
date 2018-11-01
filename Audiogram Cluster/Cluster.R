@@ -14,7 +14,7 @@
 #install.packages('xlsx')
 #install.packages('zoo')
 #install.packages('class')
-
+install.packages('partykit')
 
 #load packages
 library("dplyr")
@@ -30,7 +30,7 @@ library('rattle')
 library('readr')
 library('xlsx')
 library('zoo')
-
+library('partykit')
 
 
 #data path
@@ -213,12 +213,110 @@ for (idx in 1:rowTarget){
 clusterAud <- classVector[cls]
 
 
-
 audiogram.left <- data.frame(data.left.audiogram,clusterAud[1:1961])
 audiogram.right <- data.frame(data.right.audiogram,clusterAud[1962:3922]) 
 
 audiogram.left <- data.frame(audiogram.left,data.left[,1])
 audiogram.right <- data.frame(audiogram.right,data.right[,1])
+
+colnames(audiogram.left)[9:10] <- c('Class','ID')
+colnames(audiogram.right)[9:10] <- c('Class','ID')
+
+# write.csv(audiogram.left,file='Audiogram_left_merged.csv')
+# write.csv(audiogram.right,file='Audiogram_right_merged.csv')
+
+#N1 <- audiogram.left[audiogram.left[,9]== 'N1',]
+mean_aud.left <- audiogram.left[,3:8] %>% aggregate(by=list(audiogram.left$Class),FUN=mean) 
+std_aud.left <- audiogram.left[,3:8] %>% aggregate(by=list(audiogram.left$Class),FUN=sd)
+
+mean_aud.right <- audiogram.right[,3:8] %>% aggregate(by=list(audiogram.right$Class),FUN=mean)
+std_aud.right <- audiogram.right[,3:8] %>% aggregate(by=list(audiogram.right$Class),FUN=sd)
+
+colnames(audiogram.left)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+colnames(audiogram.right)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+
+audiogram.left[,3:8] <- -1 * audiogram.left[,3:8]
+audiogram.right[,3:8] <- -1 * audiogram.right[,3:8]
+
+left <- melt(audiogram.left[,-c(1,2)],by=c('Class'))
+right <- melt(audiogram.right[,-c(1,2)],by=c('Class'))
+names(left) <- c('clusterNr','ID','frequency','HL')
+names(right) <- c('clusterNr','ID','frequency','HL')
+
+# N1 <- audiogram.left[audiogram.left$Class == 'N1',]
+# colnames(N1)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N1 <- melt(N1,by=c('Class'))
+# N2 <- audiogram.left[audiogram.left$Class == 'N2',]
+# colnames(N2)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N2 <- melt(N2)
+# N3 <- audiogram.left[audiogram.left$Class == 'N3',] 
+# colnames(N3)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N3 <- melt(N3)
+# N4 <- audiogram.left[audiogram.left$Class == 'N4',] 
+# colnames(N4)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N4 <- melt(N4)
+# N5 <- audiogram.left[audiogram.left$Class == 'N5',] 
+# colnames(N5)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N5 <- melt(N5)
+# N6 <- audiogram.left[audiogram.left$Class == 'N6',] 
+# colnames(N6)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N6 <- melt(N6)
+# N7 <- audiogram.left[audiogram.left$Class == 'N7',] 
+# colnames(N7)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# N7 <- melt(N7)
+# S1 <- audiogram.left[audiogram.left$Class == 'S1',] 
+# colnames(S1)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# S1 <- melt(S1)
+# S2 <- audiogram.left[audiogram.left$Class == 'S2',] 
+# colnames(S2)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# S2 <- melt(S2)
+# S3 <- audiogram.left[audiogram.left$Class == 'S3',] 
+# colnames(S3)[3:8] <- c('0.25kHz','0.5kHz','1kHz','2kHz','4kHz','6kHz')
+# S3 <- melt(S3)
+# 
+
+
+df.left <- bind_rows(list(Standard_Audiograms=centers.standard,BEAR_audiograms =left),
+                 .id = 'source')
+
+#plot those 
+#left ear
+ggplot(data=left,aes(x=frequency,HL)) + 
+  geom_line(color='red',aes(group=ID),alpha=0.2) + 
+  geom_line(data=centers.standard,aes(x=frequency,HL,
+                                      group=clusterNr),color='blue',size=1.5)+
+  facet_wrap(~clusterNr) +
+  labs(title='Left ear')
+  
+#right ear
+ggplot(data=right,aes(x=frequency,HL)) + 
+  geom_line(color='red',aes(group=ID),alpha=0.2) + 
+  geom_line(data=centers.standard,aes(x=frequency,HL,
+                                      group=clusterNr),color='blue',size=1.5)+
+  facet_wrap(~clusterNr)+
+  labs(title='Right ear')
+
+len <- matrix(nrow=10,ncol=2,rep(0,20))
+bla <- c('N1','N2','N3','N4','N5','N6','N7','S1','S2','S3')
+for (idx in 1:10) {
+  len[idx,1] <- dim(audiogram.left[audiogram.left$Class == bla[idx],])[1]
+  len[idx,2] <- dim(audiogram.right[audiogram.right$Class == bla[idx],])[1]
+}
+
+
+audiogram.left$Gender <- as.factor(audiogram.left$Gender)
+audiogram.right$Gender <- as.factor(audiogram.right$Gender)
+
+levels(audiogram.left$Gender) <- c('F','M')
+levels(audiogram.right$Gender) <- c('F','M')
+
+#classification tree left
+fit.tree.left <- ctree(Age + Gender ~ Class, data = audiogram.left)
+plot(fit.tree.left,main='Classification based on age and gender left ear')
+
+#classification tree right
+fit.tree.right <- ctree(AGE + Gender ~ Class, data = audiogram.right)
+plot(fit.tree.right,main='Classification based on age and gender right ear')
 
 
 
